@@ -110,8 +110,9 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 import DeviceChart from '../components/DeviceChart.vue'
-import { getLatestDevices } from '../api'
+
 
 export default {
   name: 'DeviceList',
@@ -119,6 +120,18 @@ export default {
     DeviceChart
   },
   setup() {
+    const API_CONFIG = {
+      baseURL: '',
+      endpoints: {
+        latestDevices: '/frontend/devices/latest'
+      }
+    }
+
+    const request = axios.create({
+      baseURL: API_CONFIG.baseURL,
+      timeout: 5000
+    })
+
     const devices = ref([])
     const loading = ref(false)
     const showChartModal = ref(false)
@@ -126,35 +139,65 @@ export default {
     const currentChartType = ref('temperature')
 
     // 模拟API数据 - 实际使用时请调用真实的API
+    // const fetchDevices = async () => {
+    //   loading.value = true
+    //   try {
+    //     // 模拟API调用
+    //     await new Promise(resolve => setTimeout(resolve, 800))
+        
+    //     // 模拟数据
+    //     devices.value = Array.from({ length: 8 }, (_, i) => {
+    //       const id = `dev${(i + 1).toString().padStart(3, '0')}`
+    //       const baseTemp = 20 + Math.random() * 10
+    //       const baseAlt = 10 + Math.random() * 10
+          
+    //       return {
+    //         device_id: id,
+    //         name: `设备${i + 1}`,
+    //         longitude: 121.1 + Math.random() * 0.2,
+    //         latitude: 31.2 + Math.random() * 0.2,
+    //         temperature: Number(baseTemp.toFixed(1)),
+    //         altitude: Number(baseAlt.toFixed(1)),
+    //         obstacle_distance: Number((Math.random() * 2).toFixed(2)),
+    //         timestamp: new Date(Date.now() - Math.random() * 600000).toISOString().replace('T', ' ').substr(0, 19)
+    //       }
+    //     })
+    //   } catch (error) {
+    //     console.error('获取设备数据失败:', error)
+    //   } finally {
+    //     loading.value = false
+    //   }
+    // }
+
     const fetchDevices = async () => {
       loading.value = true
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
-        // 模拟数据
-        devices.value = Array.from({ length: 8 }, (_, i) => {
-          const id = `dev${(i + 1).toString().padStart(3, '0')}`
-          const baseTemp = 20 + Math.random() * 10
-          const baseAlt = 10 + Math.random() * 10
-          
-          return {
-            device_id: id,
-            name: `设备${i + 1}`,
-            longitude: 121.1 + Math.random() * 0.2,
-            latitude: 31.2 + Math.random() * 0.2,
-            temperature: Number(baseTemp.toFixed(1)),
-            altitude: Number(baseAlt.toFixed(1)),
-            obstacle_distance: Number((Math.random() * 2).toFixed(2)),
-            timestamp: new Date(Date.now() - Math.random() * 600000).toISOString().replace('T', ' ').substr(0, 19)
-          }
-        })
+        const res = await request.get(API_CONFIG.endpoints.latestDevices)
+
+        if (res.data.code !== 0) {
+          console.error('latest 接口返回错误:', res.data.msg)
+          return
+        }
+
+        // 🔑 字段对齐就在这里做
+        devices.value = res.data.data.map(item => ({
+          device_id: item.device_id,
+          name: item.device_id,                 // 后端没给 name，先用 id 顶
+          longitude: Number(item.longitude),
+          latitude: Number(item.latitude),
+          temperature: Number(item.temperature),
+          altitude: Number(item.humidity),      // 👈 humidity → altitude
+          obstacle_distance: Number(item.obstacle_distance),
+          timestamp: item.timestamp
+        }))
+
       } catch (error) {
         console.error('获取设备数据失败:', error)
       } finally {
         loading.value = false
       }
     }
+
 
     const refreshData = () => {
       fetchDevices()

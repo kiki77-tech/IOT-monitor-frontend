@@ -14,7 +14,10 @@
 </template>
 
 <script>
+import axios from 'axios'
 import { ref, watch, onMounted } from 'vue'
+
+
 
 export default {
   name: 'DeviceChart',
@@ -30,6 +33,20 @@ export default {
     }
   },
   setup(props) {
+    const API_CONFIG = {
+      baseURL: '',   // ✅ 关键：不要写 http://192...
+      endpoints: {
+        temperatureHistory: '/frontend/device/temperature',
+        humidityHistory: '/frontend/device/humidity'
+      }
+    }
+
+
+    const request = axios.create({
+      baseURL: API_CONFIG.baseURL,
+      timeout: 5000
+    })
+
     const loading = ref(false)
     const chartData = ref([])
     const chartOption = ref({})
@@ -107,29 +124,78 @@ export default {
     }
 
     // 模拟API数据 - 实际使用时请调用真实的API
-    const fetchData = () => {
-      loading.value = true
+    // const fetchData = () => {
+    //   loading.value = true
       
-      // 模拟API延迟
-      setTimeout(() => {
-        // 模拟数据
-        const baseValue = props.chartType === 'temperature' ? 20 : 10
-        chartData.value = Array.from({ length: 10 }, (_, i) => {
-          const minute = 25 - i * 2
-          const time = `14:${minute.toString().padStart(2, '0')}`
-          const value = baseValue + Math.random() * 5 - 2.5
+    //   // 模拟API延迟
+    //   setTimeout(() => {
+    //     // 模拟数据
+    //     const baseValue = props.chartType === 'temperature' ? 20 : 10
+    //     chartData.value = Array.from({ length: 10 }, (_, i) => {
+    //       const minute = 25 - i * 2
+    //       const time = `14:${minute.toString().padStart(2, '0')}`
+    //       const value = baseValue + Math.random() * 5 - 2.5
           
-          return {
-            time,
-            [props.chartType === 'temperature' ? 'temperature' : 'altitude']: 
-              Number(value.toFixed(1))
-          }
-        }).reverse()
+    //       return {
+    //         time,
+    //         [props.chartType === 'temperature' ? 'temperature' : 'altitude']: 
+    //           Number(value.toFixed(1))
+    //       }
+    //     }).reverse()
+
+    //     updateChartOption()
+    //     loading.value = false
+    //   }, 500)
+    // }
+
+    const getTemperatureHistory = (deviceId) => {
+      return request.get(API_CONFIG.endpoints.temperatureHistory, {
+        params: { device_id: deviceId }
+      })
+    }
+
+    const getHumidityHistory = (deviceId) => {
+      return request.get(API_CONFIG.endpoints.humidityHistory, {
+        params: { device_id: deviceId }
+      })
+    }
+
+
+    const fetchData = async () => {
+      loading.value = true
+      try {
+        let res
+
+        if (props.chartType === 'temperature') {
+          res = await getTemperatureHistory(props.deviceId)
+        } else {
+          // altitude 实际走湿度接口
+          res = await getHumidityHistory(props.deviceId)
+        }
+
+        if (res.data.code !== 0) {
+          console.error('接口返回错误:', res.data.msg)
+          return
+        }
+
+        chartData.value = res.data.data.map(item => ({
+          time: item.time,
+          temperature: item.temperature
+            ? Number(item.temperature)
+            : undefined,
+          altitude: item.humidity
+            ? Number(item.humidity)
+            : undefined
+        }))
 
         updateChartOption()
+      } catch (err) {
+        console.error('请求失败:', err)
+      } finally {
         loading.value = false
-      }, 500)
+      }
     }
+
 
     onMounted(() => {
       fetchData()
