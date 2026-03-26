@@ -25,7 +25,7 @@
               <th>经度</th>
               <th>纬度</th>
               <th>温度(°C)</th>
-              <th>高度(m)</th>
+              <th>湿度(%)</th>
               <th>障碍距离(m)</th>
               <th>最后更新时间</th>
               <th>操作</th>
@@ -35,14 +35,14 @@
             <tr v-for="device in devices" :key="device.device_id" :class="{ 'offline': isOffline(device) }">
               <td>{{ device.device_id }}</td>
               <td>{{ device.name }}</td>
-              <td>{{ device.longitude.toFixed(4) }}</td>
-              <td>{{ device.latitude.toFixed(4) }}</td>
+              <td>{{ device.longitude ? device.longitude.toFixed(4) : '--' }}</td>
+              <td>{{ device.latitude ? device.latitude.toFixed(4) : '--' }}</td>
               <td :class="getTemperatureClass(device.temperature)">
                 {{ device.temperature }}
               </td>
-              <td>{{ device.altitude }}</td>
+              <td>{{ device.humidity }}</td>
               <td :class="getDistanceClass(device.obstacle_distance)">
-                {{ device.obstacle_distance }}
+                {{ device.obstacle_distance !== undefined && device.obstacle_distance !== null ? device.obstacle_distance : '--' }}
               </td>
               <td>{{ formatTime(device.timestamp) }}</td>
               <td>
@@ -57,7 +57,7 @@
                     @click="showChart(device.device_id, 'altitude')"
                     class="btn btn-secondary"
                   >
-                    高度图表
+                    湿度图表
                   </button>
                 </div>
               </td>
@@ -93,7 +93,7 @@
               :class="{ 'active': currentChartType === 'altitude' }"
               class="tab-btn"
             >
-              高度变化
+              湿度变化
             </button>
           </div>
           <DeviceChart 
@@ -179,16 +179,22 @@ export default {
           return
         }
 
+        // 处理 data 为对象或数组的情况
+        let dataArray = res.data.data;
+        if (!Array.isArray(dataArray)) {
+          dataArray = [dataArray];
+        }
+
         // 🔑 字段对齐就在这里做
-        devices.value = res.data.data.map(item => ({
+        devices.value = dataArray.map(item => ({
           device_id: item.device_id,
           name: item.device_id,                 // 后端没给 name，先用 id 顶
-          longitude: Number(item.longitude),
-          latitude: Number(item.latitude),
-          temperature: Number(item.temperature),
-          altitude: Number(item.humidity),      // 👈 humidity → altitude
-          obstacle_distance: Number(item.obstacle_distance),
-          timestamp: item.timestamp
+          longitude: item.longitude ? Number(item.longitude) : null,
+          latitude: item.latitude ? Number(item.latitude) : null,
+          temperature: item.temperature ? Number(item.temperature) : null,
+          humidity: item.humidity ? Number(item.humidity) : null,
+          obstacle_distance: item.obstacle_distance ? Number(item.obstacle_distance) : null,
+          timestamp: item.timestamp || new Date().toISOString().replace('T', ' ').substring(0, 19)
         }))
 
       } catch (error) {

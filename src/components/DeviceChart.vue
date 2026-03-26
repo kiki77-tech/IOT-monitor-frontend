@@ -51,13 +51,13 @@ export default {
     const chartData = ref([])
     const chartOption = ref({})
 
-    const title = ref(props.chartType === 'temperature' ? '温度变化' : '高度变化')
-    const yAxisName = ref(props.chartType === 'temperature' ? '温度(°C)' : '高度(m)')
+    const title = ref(props.chartType === 'temperature' ? '温度变化' : '湿度变化')
+    const yAxisName = ref(props.chartType === 'temperature' ? '温度(°C)' : '湿度(%)')
 
     const updateChartOption = () => {
       const times = chartData.value.map(item => item.time)
       const values = chartData.value.map(item => 
-        props.chartType === 'temperature' ? item.temperature : item.altitude
+        props.chartType === 'temperature' ? item.temperature : item.humidity
       )
 
       chartOption.value = {
@@ -183,7 +183,7 @@ export default {
           temperature: item.temperature
             ? Number(item.temperature)
             : undefined,
-          altitude: item.humidity
+          humidity: item.humidity
             ? Number(item.humidity)
             : undefined
         }))
@@ -202,8 +202,8 @@ export default {
     })
 
     watch(() => props.chartType, () => {
-      title.value = props.chartType === 'temperature' ? '温度变化' : '高度变化'
-      yAxisName.value = props.chartType === 'temperature' ? '温度(°C)' : '高度(m)'
+      title.value = props.chartType === 'temperature' ? '温度变化' : '湿度变化'
+      yAxisName.value = props.chartType === 'temperature' ? '温度(°C)' : '湿度(%)'
       fetchData()
     })
 

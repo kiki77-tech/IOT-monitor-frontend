@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/frontend': {
-        target: 'http://192.168.3.56:8080',
+        target: 'http://192.168.71.128:8080',
         changeOrigin: true
       }
     }
