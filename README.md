@@ -1,5 +1,35 @@
-# Vue 3 + Vite
+# IoT Monitoring System Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+本仓库是基于 Vue 3 + Vite 构建的 IoT 监控系统前端项目。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 设计说明
+
+本项目采用了 Vue 3 (搭配 `<script setup>` 语法) 组件化架构，并使用 Vite 提供极速的本地开发体验和快速的生产构建。
+
+特别需要指出的是，本前端系统主要通过在构建工具中配置跨域代理并重写 `/frontend/devices/latest` 等 API 接口，来对接由 C 语言编写的底层后端服务（基于 MyTinyHttpd 构建）。该后端通过 cJSON 将设备数据转换为 JSON 格式并下发。前端通过直接发起 HTTP 请求获取并解析这些 JSON 数据，最终实现对底层 IoT 设备状态的实时渲染与展示。
+
+## 使用说明
+
+为了方便初学者在本地运行和开发本项目，请遵循以下小白友好的步骤：
+
+1. **环境准备**
+   请确保您的电脑上已经安装了 [Node.js](https://nodejs.org/)。
+
+2. **安装依赖**
+   在项目根目录下打开终端，运行以下命令以安装所有必须的依赖包：
+   ```bash
+   npm install
+   ```
+
+3. **启动开发服务器**
+   依赖安装完成后，运行以下命令启动本地开发服务器：
+   ```bash
+   npm run dev
+   ```
+   启动成功后，终端会打印出一个本地访问地址（通常为 `http://localhost:5173`）。复制该地址在浏览器中打开即可预览项目。
+
+4. **构建生产版本（可选）**
+   如果您需要打包项目进行生产环境部署，可以运行以下命令：
+   ```bash
+   npm run build
+   ```
